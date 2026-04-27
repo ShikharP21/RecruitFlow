@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model User {
+  id         String      @id @default(cuid())
+  name       String
+  email      String      @unique
+  password   String
+  gender     String?
+  role       String // 'recruiter' or 'candidate'
+  createdAt  DateTime    @default(now()) @map("created_at")
+  candidate  Candidate?
+  shortlists Shortlist[]
+
+  @@map("users")
+}
+
+model Candidate {
+  id               String      @id @default(cuid())
+  userId           String?     @unique @map("user_id")
+  name             String
+  age              Int?
+  email            String      @unique
+  phone            String?
+  workAvailability String?     @map("work_availability")
+  skills           String?
+  location         String?
+  roleName         String?     @map("role_name")
+  company          String?
+  education        String?
+  degreeSubject    String?     @map("degree_subject")
+  salaryRange      String?     @map("salary_range")
+  rawData          Json?       @map("raw_data")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  user             User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shortlistedBy    Shortlist[]
+
+  @@map("candidates")
+}
+
+model Shortlist {
+  id          String    @id @default(cuid())
+  recruiterId String    @map("recruiter_id")
+  candidateId String    @map("candidate_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  recruiter   User      @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([recruiterId, candidateId])
+  @@map("shortlists")
+}
