@@ -6,7 +6,7 @@ import { signAuthToken, AUTH_COOKIE_OPTIONS } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, role } = body;
+    const { email, password, role, recruiterCode} = body;
 
     if (!email?.trim() || !password || !role?.trim()) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -16,6 +16,15 @@ export async function POST(request: NextRequest) {
     const normalizedRole = role.toLowerCase().trim();
     if (normalizedRole !== 'recruiter' && normalizedRole !== 'candidate') {
       return NextResponse.json({ error: 'Role must be recruiter or candidate' }, { status: 400 });
+    }
+    if (
+        normalizedRole === "recruiter" &&
+        recruiterCode !== process.env.RECRUITER_CODE
+    ) {
+      return NextResponse.json(
+        { error: "Invalid Recruiter Code" },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({
